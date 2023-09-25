@@ -12,6 +12,7 @@ public class CacheTests
     public void TestNonPositiveCapacity(int capacity)
     {
         Assert.Throws<ArgumentException>(() => new LeastRecentlyUsedCache<string, int>(capacity));
+        Assert.Throws<ArgumentException>(() => new LeastRecentlyUsedCache<string, int>().Capacity = capacity);
     }
 
     [Test]
@@ -132,5 +133,45 @@ public class CacheTests
                 cache.Add(i, i);
             }
         }
+    }
+
+    [Test]
+    [TestCase(1, 2)]
+    [TestCase(2, 2)]
+    [TestCase(2, 10)]
+    public void TestIncreasingCapacity(int initialCapacity, int increasedCapacity)
+    {
+        var cache = new LeastRecentlyUsedCache<int, int>(initialCapacity);
+        for (int i = 0; i < initialCapacity + 1; i++)
+        {
+            cache.Add(i, i);
+        }
+
+        Assert.That(cache.Count, Is.EqualTo(initialCapacity));
+
+        cache.Capacity = increasedCapacity;
+        for (int i = 0; i < increasedCapacity + 1; i++)
+        {
+            cache.Add(i, i);
+        }
+
+        Assert.That(cache.Count, Is.EqualTo(increasedCapacity));
+    }
+
+    [Test]
+    [TestCase(2, 1)]
+    [TestCase(10, 4)]
+    public void TestDecreasingCapacity(int initialCapacity, int decreasedCapacity)
+    {
+        var cache = new LeastRecentlyUsedCache<int, int>(initialCapacity);
+        for (int i = 0; i < initialCapacity + 1; i++)
+        {
+            cache.Add(i, i);
+        }
+
+        Assert.That(cache.Count, Is.EqualTo(initialCapacity));
+
+        cache.Capacity = decreasedCapacity;
+        Assert.That(cache.Count, Is.EqualTo(decreasedCapacity));
     }
 }
