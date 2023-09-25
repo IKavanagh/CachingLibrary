@@ -2,6 +2,8 @@
 
 public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
 {
+    public event EventHandler<CacheEventArgs>? ItemEvicted;
+
     private readonly Dictionary<TKey, LinkedListNode<CacheItem>> _cache;
 
     private readonly LinkedList<CacheItem> _leastRecentlyUsed = new();
@@ -51,8 +53,12 @@ public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
         // key doesn't exist
         if (_cache.Count >= Capacity)
         {
-            _cache.Remove(_leastRecentlyUsed.Last!.Value.Key); // last is never null because capacity must be greater than 0
+            CacheItem evictedItem = _leastRecentlyUsed.Last!.Value; // last is never null because capacity must be greater than 0
+
+            _cache.Remove(evictedItem.Key);
             _leastRecentlyUsed.RemoveLast();
+
+            ItemEvicted?.Invoke(this, new CacheEventArgs(evictedItem.Key, evictedItem.Value));
         }
 
         CacheItem item = new(key, value);
@@ -96,5 +102,18 @@ public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
             Key = key;
             Value = value;
         }
+    }
+}
+
+public class CacheEventArgs : EventArgs
+{
+    public object Key { get; }
+
+    public object? Value { get; }
+
+    public CacheEventArgs(object key, object? value)
+    {
+        Key = key;
+        Value = value;
     }
 }
