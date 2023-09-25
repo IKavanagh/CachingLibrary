@@ -15,11 +15,45 @@ public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
     public int Capacity
     {
         get => _capacity;
-        init
+        set
         {
             if (value <= 0)
             {
                 throw new ArgumentException("Capacity must be greater than 0", nameof(Capacity));
+            }
+
+            if (value == _capacity)
+            {
+                return;
+            }
+
+            if (_capacity > 0 && value < _capacity)
+            {
+                _lock.EnterWriteLock();
+                try
+                {
+                    while (_cache.Count > value)
+                    {
+                        EvictLeastRecentlyUsedItem();
+                    }
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
+            }
+
+            if (value > _capacity)
+            {
+                _lock.EnterWriteLock();
+                try
+                {
+                    _cache.EnsureCapacity(value);
+                }
+                finally
+                {
+                    _lock.ExitWriteLock();
+                }
             }
 
             _capacity = value;
@@ -30,9 +64,14 @@ public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
 
     public LeastRecentlyUsedCache(int capacity = 5)
     {
-        Capacity = capacity;
+        if (capacity <= 0)
+        {
+            throw new ArgumentException("Capacity must be greater than 0", nameof(capacity));
+        }
 
         _cache = new Dictionary<TKey, LinkedListNode<CacheItem>>(capacity);
+
+        Capacity = capacity;
     }
 
     ~LeastRecentlyUsedCache()
@@ -63,12 +102,7 @@ public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
             // key doesn't exist
             if (_cache.Count >= Capacity)
             {
-                CacheItem evictedItem = _leastRecentlyUsed.Last!.Value; // last is never null because capacity must be greater than 0
-
-                _cache.Remove(evictedItem.Key);
-                _leastRecentlyUsed.RemoveLast();
-
-                ItemEvicted?.Invoke(this, new CacheEventArgs(evictedItem.Key, evictedItem.Value));
+                EvictLeastRecentlyUsedItem();
             }
 
             CacheItem item = new(key, value);
@@ -119,6 +153,16 @@ public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
     {
         _leastRecentlyUsed.Remove(node);
         _leastRecentlyUsed.AddFirst(node);
+    }
+
+    private void EvictLeastRecentlyUsedItem()
+    {
+        CacheItem evictedItem = _leastRecentlyUsed.Last!.Value; // last is never null because capacity must be greater than 0
+
+        _cache.Remove(evictedItem.Key);
+        _leastRecentlyUsed.RemoveLast();
+
+        ItemEvicted?.Invoke(this, new CacheEventArgs(evictedItem.Key, evictedItem.Value));
     }
 
     private class CacheItem
