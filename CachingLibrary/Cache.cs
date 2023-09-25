@@ -19,7 +19,7 @@ public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
         {
             if (value <= 0)
             {
-                throw new ArgumentException("Capacity must be greater than 0", nameof(Capacity));
+                throw new ArgumentOutOfRangeException(nameof(Capacity), "Capacity must be greater than 0");
             }
 
             if (value == _capacity)
@@ -66,7 +66,7 @@ public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
     {
         if (capacity <= 0)
         {
-            throw new ArgumentException("Capacity must be greater than 0", nameof(capacity));
+            throw new ArgumentOutOfRangeException(nameof(capacity), "Capacity must be greater than 0");
         }
 
         _cache = new Dictionary<TKey, LinkedListNode<CacheItem>>(capacity);

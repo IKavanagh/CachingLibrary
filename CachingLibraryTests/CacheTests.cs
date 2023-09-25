@@ -11,8 +11,8 @@ public class CacheTests
     [TestCase(-1)]
     public void TestNonPositiveCapacity(int capacity)
     {
-        Assert.Throws<ArgumentException>(() => new LeastRecentlyUsedCache<string, int>(capacity));
-        Assert.Throws<ArgumentException>(() => new LeastRecentlyUsedCache<string, int>().Capacity = capacity);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new LeastRecentlyUsedCache<string, int>(capacity));
+        Assert.Throws<ArgumentOutOfRangeException>(() => new LeastRecentlyUsedCache<string, int>().Capacity = capacity);
     }
 
     [Test]
