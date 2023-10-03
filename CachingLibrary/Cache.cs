@@ -1,4 +1,8 @@
-﻿namespace CachingLibrary;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading;
+
+namespace CachingLibrary;
 
 public class LeastRecentlyUsedCache<TKey, TValue> where TKey : notnull
 {
